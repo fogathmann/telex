@@ -1,0 +1,38 @@
+<configure xmlns="http://pylonshq.com/pyramid">
+
+    <resource
+        interface='telex.interfaces.IParameter'
+        member="telex.resources.ParameterMember"
+        entity="telex.entities.Parameter"
+        expose="false"
+    >
+    </resource>
+    <resource
+        interface='telex.interfaces.IParameterDefinition'
+        member="telex.resources.ParameterDefinitionMember"
+        entity="telex.entities.ParameterDefinition"
+        expose="false"
+    >
+    </resource>
+    <resource
+        interface='telex.interfaces.ICommand'
+        member="telex.resources.CommandMember"
+        collection_root_name="commands"
+        entity="telex.entities.Command"
+    >
+        <representer content_type='everest.mime.JsonMime'>
+            <ref attribute="parameters" kind="URL" />
+        </representer>    
+    </resource>
+    <resource
+        interface='telex.interfaces.ICommandDefinition'
+        member="telex.resources.CommandDefinitionMember"
+        collection_root_name="command-definitions"
+        entity="telex.entities.CommandDefinition"
+    >
+        <representer content_type='everest.mime.JsonMime'>
+            <ref attribute="parameter_definitions" kind="URL" />
+        </representer>    
+    </resource>
+
+</configure>

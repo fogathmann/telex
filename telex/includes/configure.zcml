@@ -1,0 +1,49 @@
+<configure xmlns="http://pylonshq.com/pyramid">
+
+    <!-- Include special directives. -->
+
+    <include package="everest.includes" />
+
+    <!-- Repositories. -->
+
+    <!-- Representers. -->
+
+    <!-- Resource declarations. -->
+
+    <include file="resources.zcml" />
+
+    <!-- Views. -->
+
+    <resource_view
+        for="telex.interfaces.IParameterDefinition
+             telex.interfaces.ICommandDefinition
+             telex.interfaces.ICommand
+            "
+        request_method="GET" />
+
+    <collection_view
+        for="telex.interfaces.ICommandDefinition
+            "
+        request_method="POST" />
+
+    <collection_view
+        for="telex.interfaces.ICommand
+            "
+        view="telex.views.PostCommandCollectionView"
+        request_method="POST" />
+
+    <member_view
+        for="telex.interfaces.ICommandDefinition
+            "
+        request_method="PUT
+                        FAKE_PUT
+                        DELETE" />
+
+    <!-- Public folder for static content -->
+    <view
+        context="everest.resources.interfaces.IService"
+        view="everest.views.static.public_view"
+        name="public"
+        request_method="GET" />
+
+</configure>
