@@ -14,6 +14,7 @@ from sqlalchemy import Integer
 from sqlalchemy import MetaData
 from sqlalchemy import String
 from sqlalchemy import Table
+from sqlalchemy import UniqueConstraint
 from sqlalchemy.orm import relationship
 #from sqlalchemy.sql import literal
 #from sqlalchemy.sql import select
@@ -49,7 +50,11 @@ def create_metadata(engine):
         Table('command_definition', metadata,
               Column('command_definition_id', Integer, primary_key=True),
               Column('name', String, nullable=False),
+              Column('label', String, nullable=False),
               Column('executable', String, nullable=False),
+              Column('submitter', String, nullable=False),
+              Column('category', String, nullable=True),
+              Column('description', String, nullable=True),
               Column('working_directory', String),
               Column('environment', String),
               )
@@ -61,10 +66,14 @@ def create_metadata(engine):
                         command_definition_tbl.c.command_definition_id),
                      nullable=False),
               Column('name', String, nullable=False),
+              Column('label', String, nullable=False),
+              Column('description', String, nullable=True),
               Column('value_type', String, nullable=False),
               Column('default_value', String),
               Column('is_mandatory', Boolean, nullable=False, default=False),
               )
+    UniqueConstraint(parameter_definition_tbl.c.command_definition_id,
+                     parameter_definition_tbl.c.name)
     command_tbl = \
         Table('command', metadata,
               Column('command_id', Integer, primary_key=True),
@@ -73,7 +82,7 @@ def create_metadata(engine):
                         command_definition_tbl.c.command_definition_id),
                      nullable=False),
               Column('timestamp', DateTime, nullable=False),
-              Column('user', String, nullable=False),
+              Column('submitter', String, nullable=False),
               Column('environment', String),
               )
     parameter_tbl = \

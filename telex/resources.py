@@ -25,7 +25,11 @@ class CommandDefinitionMember(Member):
     relation = 'http://telex.org/relations/command-definition'
     title = 'Command Definition'
     name = terminal_attribute(str, 'name')
+    label = terminal_attribute(str, 'label')
     executable = terminal_attribute(str, 'executable')
+    submitter = terminal_attribute(str, 'submitter')
+    category = terminal_attribute(str, 'category')
+    description = terminal_attribute(str, 'description')
     working_directory = terminal_attribute(str, 'working_directory')
     parameter_definitions = collection_attribute(IParameterDefinition,
                                                  'parameter_definitions')
@@ -35,6 +39,8 @@ class ParameterDefinitionMember(Member):
     relation = 'http://telex.org/relations/parameter-definition'
     title = 'Parameter Definition'
     name = terminal_attribute(str, 'name')
+    label = terminal_attribute(str, 'label')
+    description = terminal_attribute(str, 'description')
     command_definition = member_attribute(ICommandDefinition,
                                           'command_definition')
     value_type = terminal_attribute(str, 'value_type')
@@ -45,7 +51,7 @@ class ParameterDefinitionMember(Member):
 class CommandMember(Member):
     relation = 'http://telex.org/relations/command'
     title = 'Command'
-    user = terminal_attribute(str, 'user')
+    submitter = terminal_attribute(str, 'submitter')
     timestamp = terminal_attribute(datetime, 'timestamp')
     command_definition = member_attribute(ICommandDefinition,
                                           'command_definition')

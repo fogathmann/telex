@@ -23,6 +23,7 @@
 
     <collection_view
         for="telex.interfaces.ICommandDefinition
+             telex.interfaces.IParameterDefinition
             "
         request_method="POST" />
 

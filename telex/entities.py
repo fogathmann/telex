@@ -6,7 +6,12 @@ See LICENSE.txt for licensing, CONTRIBUTORS.txt for contributor information.
 
 Created on Jul 7, 2014.
 """
+import datetime
+
+from pytz import timezone
+
 from everest.entities.base import Entity
+from everest.rfc3339 import rfc3339
 from telex.compat import quote
 
 
@@ -24,8 +29,16 @@ class CommandDefinition(Entity):
     """
     #: Name of the command. Needs to be unique.
     name = None
+    #: Human-readable, explanatory label.
+    label = None
     #: Command executable.
     executable = None
+    #: User submitting the command.
+    submitter = None
+    #: Category this command definition belongs to.
+    category = None
+    #: Optional description of the purpose of this command definition.
+    description = None
     #: List of parameter definitions for this command definition.
     parameter_definitions = None
     #: Environment variables to set for the command execution. Optional.
@@ -33,14 +46,18 @@ class CommandDefinition(Entity):
     #: Working directory to run the command in. Optional.
     working_directory = None
 
-    def __init__(self, name, executable,
-                 parameter_definitions=None, environment=None,
-                 working_directory=None, **kw):
+    def __init__(self, name, label, executable, submitter, category='',
+                 description='', parameter_definitions=None,
+                 environment=None, working_directory=None, **kw):
         Entity.__init__(self, **kw)
         self.name = name
+        self.label = label
         # We expand the "~" first, then other environment variables used
         # in the path.
         self.executable = executable
+        self.submitter = submitter
+        self.category = category
+        self.description = description
         if parameter_definitions is None:
             parameter_definitions = []
         self.parameter_definitions = parameter_definitions
@@ -51,13 +68,20 @@ class CommandDefinition(Entity):
     def slug(self):
         return self.name
 
-    def add_parameter_definition(self, name, value_type, default_value=None,
+    def add_parameter_definition(self, name, label, value_type,
+                                 description=None,
+                                 default_value=None,
                                  is_mandatory=False):
-        init_data = dict(name=name, value_type=value_type,
+        init_data = dict(name=name,
+                         label=label,
+                         value_type=value_type,
+                         description=description,
                          default_value=default_value,
                          is_mandatory=is_mandatory)
         pd = ParameterDefinition.create_from_data(init_data)
         self.parameter_definitions.append(pd)
+        if pd.command_definition is None:
+            pd.command_definition = self
 
 
 class ParameterDefinition(Entity):
@@ -67,6 +91,10 @@ class ParameterDefinition(Entity):
     #: Name of the parameter definition. Needs to be unique within the
     #: referenced command definition.
     name = None
+    #: Human-readable, explanatory label.
+    label = None
+    #: Optional description of the purpose of this parameter.
+    description = None
     #: Value type of the parameter.
     value_type = None
     #: Default value for the parameter. Optional.
@@ -76,10 +104,13 @@ class ParameterDefinition(Entity):
     #: Command definition holding this parameter definition.
     command_definition = None
 
-    def __init__(self, name, command_definition, value_type,
-                 default_value=None, is_mandatory=False, **kw):
+    def __init__(self, name, label, command_definition, value_type,
+                 description='', default_value=None, is_mandatory=False,
+                 **kw):
         Entity.__init__(self, **kw)
         self.name = name
+        self.label = label
+        self.description = description
         self.command_definition = command_definition
         self.value_type = value_type
         self.default_value = default_value
@@ -88,8 +119,8 @@ class ParameterDefinition(Entity):
     @property
     def slug(self):
         """
-        The parameter definition slug is composed as ::
-          <command definition name>_<parameter definition name>
+        Using the `name` attribute as a slug. Note that the name is only
+        unique within the scope of a single command definition.
         """
         return self.name
 #        return "%s_%s" % (self.command_definition.name, self.name)
@@ -111,8 +142,8 @@ class Command(Entity):
     parameters = None
     #: Execution time stamp.
     timestamp = None
-    #: User executing this command.
-    user = None
+    #: User submitting this command.
+    submitter = None
     #: Environment variables to set for this command. Optional.
     environment = None
     #: Output generated during the execution.
@@ -160,13 +191,18 @@ class Command(Entity):
                                             for prm in missing_mnd_prms]))
         return cls(**data)
 
-    def __init__(self, command_definition, parameters, timestamp, user,
-                 environment=None, **kw):
+    def __init__(self, command_definition, submitter, parameters,
+                 timestamp=None, environment=None, **kw):
         Entity.__init__(self, **kw)
         self.command_definition = command_definition
         self.parameters = parameters
         self.timestamp = timestamp
-        self.user = user
+        self.submitter = submitter
+        if timestamp is None:
+            utc = timezone('UTC')
+            ts = datetime.datetime.now(utc)
+            timestamp = rfc3339(ts, use_system_timezone=False)
+        self.timestamp = timestamp
         self.environment = environment
 
     @property

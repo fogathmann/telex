@@ -1,0 +1,11 @@
+<configure xmlns="http://pylonshq.com/pyramid">
+
+    <include package="everest.includes" />
+    <rdb_repository
+        make_default="true"
+        metadata_factory="telex.rdb.create_metadata" />
+
+    <!-- Include telex package. -->
+    <include package="telex.includes" />
+
+</configure>
