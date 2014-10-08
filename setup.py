@@ -7,6 +7,13 @@ Created on Jul 5, 2014.
 from setuptools import find_packages
 from setuptools import setup
 
+install_requirements = \
+    [line
+     for line in open('requirements.txt', 'rU').readlines()
+     if not line.startswith('-e')]
+install_requirements.append('everest')
+
+
 setup(name='telex',
       version='0.1',
       description='REST server for remote execution of command line tools.',
@@ -17,10 +24,9 @@ setup(name='telex',
       package_data={'': ["*.zcml"]},
       include_package_data=True,
       zip_safe=False,
-      install_requires=['everest>1.0'],
+      install_requires=install_requirements,
       dependency_links=
-        ['https://github.com/gathmann/telex/tarball/master#egg=telex',
-         'https://github.com/cenix/everest/tarball/master#egg=everest'],
+            ['https://github.com/cenix/everest/tarball/master#egg=everest'],
       entry_points="""\
       [paste.app_factory]
       app = everest.run:app_factory
