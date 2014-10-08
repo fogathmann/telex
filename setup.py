@@ -17,10 +17,10 @@ setup(name='telex',
       package_data={'': ["*.zcml"]},
       include_package_data=True,
       zip_safe=False,
-      install_requires=['everest-dev'],
+      install_requires=['everest>1.0'],
       dependency_links=
         ['https://github.com/gathmann/telex/tarball/master#egg=telex',
-         'https://github.com/cenix/everest/tarball/master#egg=everest-dev'],
+         'https://github.com/cenix/everest/tarball/master#egg=everest'],
       entry_points="""\
       [paste.app_factory]
       app = everest.run:app_factory
