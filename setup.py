@@ -19,7 +19,8 @@ setup(name='telex',
       zip_safe=False,
       install_requires=['everest'],
       dependency_links=
-        ['https://github.com/gathmann/telex/tarball/master#egg=telex-dev'],
+        ['https://github.com/gathmann/telex/tarball/master#egg=telex',
+         'https://github.com/cenix/everest/tarball/master#egg=everest'],
       entry_points="""\
       [paste.app_factory]
       app = everest.run:app_factory
