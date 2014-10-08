@@ -11,7 +11,7 @@ install_requirements = \
     [line
      for line in open('requirements.txt', 'rU').readlines()
      if not line.startswith('-e')]
-install_requirements.append('everest')
+install_requirements.append('everest>=1.1dev')
 
 
 setup(name='telex',
@@ -26,7 +26,7 @@ setup(name='telex',
       zip_safe=False,
       install_requires=install_requirements,
       dependency_links=
-            ['https://github.com/cenix/everest/tarball/master#egg=everest'],
+        ['https://github.com/cenix/everest/archive/master.zip#egg=everest-1.1dev'],
       entry_points="""\
       [paste.app_factory]
       app = everest.run:app_factory

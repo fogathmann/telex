@@ -23,7 +23,8 @@ Quick installation instructions
 
 ::
 
-  $ pip install -e .
+  $ cd telex
+  $ pip install -e --allow-external python-graph-core --allow-unverified python-graph-core .
 
 4. Start the ``telex`` server
 

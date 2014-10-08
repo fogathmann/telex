@@ -1,0 +1,2 @@
+include *.py *.txt *.rst *.in *.cfg *.conf
+recursive-include telex *.py *.zcml *.tmpl *.ini

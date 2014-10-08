@@ -1,1 +1,1 @@
--e git+https://github.com/cenix/everest/#egg=everest
+-e git+https://github.com/cenix/everest/#egg=everest-1.1dev
