@@ -1,6 +1,10 @@
 <configure xmlns="http://pylonshq.com/pyramid">
 
-    <!-- Include telex package. -->
+    <include package="everest.includes" />
+
+    <messaging
+        repository="MEMORY"/>
+        
     <include package="telex.includes" />
 
 </configure>

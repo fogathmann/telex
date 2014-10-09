@@ -24,8 +24,8 @@ __all__ = ['PostCommandCollectionView',
 
 
 class PostCommandCollectionView(PostCollectionView):
-    error_line_pat = re.compile('.*error.*', re.I)
-    warning_line_pat = re.compile('.*warn.*', re.I)
+    error_line_pat = re.compile('.* error .*', re.I)
+    warning_line_pat = re.compile('.* warn .*', re.I)
 
     def _get_result(self, resource):
         cmd_ent = resource.get_entity()
@@ -34,19 +34,21 @@ class PostCommandCollectionView(PostCollectionView):
         exc.run()
         result = None
         if cmd_ent.exit_code != 0:
-            # We attempt to extract warnings from the stderr output so
-            # that the user has the option to submit again ignoring the
-            # warnings. An output line is considered a warning if it
-            # contains a "WARN" marker (case insensitive).
+            # We attempt to extract error and warning messages from the
+            # stderr output. If only warnings were encountered, the user has
+            # the option to submit again ignoring the warnings.
+            # An output line is considered an error if it contains a
+            # " ERROR " marker and a warning if it contains a " WARN " marker
+            # (both case insensitive).
+            errors = []
             warnings = []
-            has_errors = False
-            for line in cmd_ent.error_string:
+            for line in cmd_ent.error_string.split(os.linesep):
                 if self.error_line_pat.match(line):
-                    has_errors = True
+                    errors.append(line)
                     break
                 elif self.warning_line_pat.match(line):
                     warnings.append(line)
-            if not has_errors and len(warnings) > 0:
+            if len(errors) == 0 and len(warnings) > 0:
                 if self._enable_messaging:
                     # This triggers a 307 response.
                     reg = get_current_registry()
@@ -56,14 +58,19 @@ class PostCommandCollectionView(PostCollectionView):
                 else:
                     msg = os.linesep.join(
                             ['The command triggered the following '
-                             'warnings"', cmd_ent.error_string])
+                             'warnings:',
+                             cmd_ent.error_string])
                     http_exc = HTTPBadRequest(msg)
                     result = self.request.get_response(http_exc)
-            elif has_errors:
-                msg = 'The command terminated abnormally.%s%s' \
-                      'Error output: %s%sStandard output: %s' \
-                      % (os.linesep, os.linesep, cmd_ent.error_string,
-                         os.linesep, cmd_ent.error_string)
+            else:
+                err_msg = len(errors) == 0 and cmd_ent.error_string \
+                          or os.linesep.join(errors)
+                msg = os.linesep.join(
+                            ['The command terminated abnormally.',
+                             'Error output:',
+                             err_msg,
+                             'Standard output:',
+                             cmd_ent.output_string])
                 http_exc = HTTPBadRequest(msg)
                 result = self.request.get_response(http_exc)
         if result is None:
