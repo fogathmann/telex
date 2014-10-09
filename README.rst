@@ -30,10 +30,17 @@ Quick installation instructions
   $ cd telex
   $ pip install --allow-external python-graph-core --allow-unverified python-graph-core --find-links=https://github.com/cenix/everest/archive/master.zip#egg=everest-1.1dev .
   
-  (the `--allow-external` and --`allow-unverified` options are to allow 
-  installing the `python-graph-core` package which has not been maintained in
-  a while).
+(the `--allow-external` and --`allow-unverified` options are to allow 
+installing the `python-graph-core` package dependency which has not been 
+maintained in a while).
 
 4. Start the ``telex`` server
 
-``$ paster serve telex.ini``
+You need an `.ini` file to start the telex server; for a very simple setup
+you can try the default `.ini` file that comes with the telex sources:
+
+::
+
+    $ paster serve telex.ini
+
+For more advanced setups, please refer to the `everest` documentation.
