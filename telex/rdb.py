@@ -92,16 +92,10 @@ def create_metadata(engine):
                      ForeignKey(
                         parameter_definition_tbl.c.parameter_definition_id),
                      nullable=False),
-              Column('value', String, nullable=False)
-              )
-    command_parameter_tbl = \
-        Table('command_parameter', metadata,
               Column('command_id', Integer,
                      ForeignKey(command_tbl.c.command_id),
-                     primary_key=True),
-              Column('parameter_id', Integer,
-                     ForeignKey(parameter_tbl.c.parameter_id),
-                     primary_key=True),
+                     nullable=False),
+              Column('value', String, nullable=False)
               )
     # Mapper definitions.
     mapper(CommandDefinition, command_definition_tbl,
@@ -109,6 +103,7 @@ def create_metadata(engine):
            slug_expression=command_definition_slug,
            properties=dict(parameter_definitions=
                             relationship(ParameterDefinition,
+                                         cascade_backrefs=False,
                                          back_populates='command_definition'),
                            )
            )
@@ -127,14 +122,17 @@ def create_metadata(engine):
            properties=dict(command_definition=relationship(CommandDefinition,
                                                            uselist=False),
                            parameters=relationship(Parameter,
-                                                   secondary=
-                                                        command_parameter_tbl),
+                                                   cascade_backrefs=False,
+                                                   back_populates='command'),
                            ),
            )
     mapper(Parameter, parameter_tbl,
            id_attribute='parameter_id',
            properties=dict(parameter_definition=
-                            relationship(ParameterDefinition, uselist=False)
+                            relationship(ParameterDefinition, uselist=False),
+                               command=
+                                    relationship(Command, uselist=False,
+                                                 back_populates='parameters')
                            )
            )
     # Configure and initialize metadata.
