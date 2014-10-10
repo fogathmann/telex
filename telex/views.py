@@ -94,9 +94,13 @@ class CommandExecutor(object):
             # We use the path of the executable as default execution path.
             exc = self.__command.command_definition.executable
             cwd = os.path.dirname(exc)
+            if cwd != '':
+                cwd = os.path.expandvars(cwd)
+            else:
+                cwd = None
         child = Popen(self.__command.command_string,
                       shell=True,
-                      cwd=os.path.expandvars(cwd),
+                      cwd=cwd,
                       env=self.__command.environment,
                       universal_newlines=True, stdout=PIPE, stderr=PIPE)
         output_string, error_string = child.communicate()

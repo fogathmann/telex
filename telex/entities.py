@@ -11,7 +11,6 @@ import datetime
 from pytz import timezone
 
 from everest.entities.base import Entity
-from everest.rfc3339 import rfc3339
 from telex.compat import quote
 
 
@@ -46,14 +45,12 @@ class CommandDefinition(Entity):
     #: Working directory to run the command in. Optional.
     working_directory = None
 
-    def __init__(self, name, label, executable, submitter, category='',
-                 description='', parameter_definitions=None,
+    def __init__(self, name, label, executable, submitter, category=None,
+                 description=None, parameter_definitions=None,
                  environment=None, working_directory=None, **kw):
         Entity.__init__(self, **kw)
         self.name = name
         self.label = label
-        # We expand the "~" first, then other environment variables used
-        # in the path.
         self.executable = executable
         self.submitter = submitter
         self.category = category
@@ -105,7 +102,7 @@ class ParameterDefinition(Entity):
     command_definition = None
 
     def __init__(self, name, label, command_definition, value_type,
-                 description='', default_value=None, is_mandatory=False,
+                 description=None, default_value=None, is_mandatory=False,
                  **kw):
         Entity.__init__(self, **kw)
         self.name = name
@@ -196,12 +193,10 @@ class Command(Entity):
         Entity.__init__(self, **kw)
         self.command_definition = command_definition
         self.parameters = parameters
-        self.timestamp = timestamp
         self.submitter = submitter
         if timestamp is None:
             utc = timezone('UTC')
-            ts = datetime.datetime.now(utc)
-            timestamp = rfc3339(ts, use_system_timezone=False)
+            timestamp = datetime.datetime.now(utc)
         self.timestamp = timestamp
         self.environment = environment
 
