@@ -26,6 +26,10 @@ class IParameterDefinition(Interface):
     pass
 
 
+class IParameterOption(Interface):
+    pass
+
+
 class ICommand(Interface):
     pass
 

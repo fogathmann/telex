@@ -16,6 +16,7 @@ from everest.resources.utils import get_root_collection
 from everest.rfc3339 import rfc3339
 from telex.entities import CommandDefinition
 from telex.interfaces import ICommandDefinition
+from telex.constants import VALUE_TYPES
 
 
 __docformat__ = 'reStructuredText en'
@@ -43,7 +44,8 @@ def timestamp():
 
 @pytest.fixture
 def cmd_def_echo(submitter): # pylint:disable=W0621
-    # The app_creator fixture is not used, but needs to be initialized.
+    # FIXME: Implicitly depends on either app_creator or resource_repo
+    #        fixture.
     cd = CommandDefinition('echo',
                            'Echo command',
                            '%s %s' % (sys.executable, SCRIPT),
@@ -51,9 +53,9 @@ def cmd_def_echo(submitter): # pylint:disable=W0621
                            description='Simple command echoing input to '
                                        'stdout.',
                            working_directory=os.path.dirname(__file__))
-    cd.add_parameter_definition('text', 'Text', str,
-                                description='Text to echo.',
-                                is_mandatory=True)
+    pd = cd.add_parameter_definition('text', 'Text', VALUE_TYPES.STRING,
+                                     description='Text to echo.')
+    pd.add_parameter_option('is_mandatory', True)
     cd_coll = get_root_collection(ICommandDefinition)
     return cd_coll.create_member(cd)
 
@@ -66,9 +68,9 @@ def cmd_def_runner(submitter): # pylint:disable=W0613,W0621
                            submitter,
                            description='Simple command running a script.',
                            working_directory=os.path.dirname(__file__))
-    cd.add_parameter_definition('script', 'Script', str,
-                                description='Script to run.',
-                                is_mandatory=True)
+    pd = cd.add_parameter_definition('script', 'Script', VALUE_TYPES.STRING,
+                                     description='Script to run.')
+    pd.add_parameter_option('is_mandatory', True)
     cd_coll = get_root_collection(ICommandDefinition)
     return cd_coll.create_member(cd)
 

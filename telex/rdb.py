@@ -6,7 +6,6 @@ See LICENSE.txt for licensing, CONTRIBUTORS.txt for contributor information.
 
 Created on Jul 31, 2014.
 """
-from sqlalchemy import Boolean
 from sqlalchemy import Column
 from sqlalchemy import DateTime
 from sqlalchemy import ForeignKey
@@ -24,6 +23,7 @@ from telex.entities import Command
 from telex.entities import CommandDefinition
 from telex.entities import Parameter
 from telex.entities import ParameterDefinition
+from telex.entities import ParameterOption
 
 
 __docformat__ = 'reStructuredText en'
@@ -55,8 +55,8 @@ def create_metadata(engine):
               Column('submitter', String, nullable=False),
               Column('category', String, nullable=True),
               Column('description', String, nullable=True),
-              Column('working_directory', String),
-              Column('environment', String),
+              Column('working_directory', String, nullable=True),
+              Column('environment', String, nullable=True),
               )
     parameter_definition_tbl = \
         Table('parameter_definition', metadata,
@@ -67,13 +67,21 @@ def create_metadata(engine):
                      nullable=False),
               Column('name', String, nullable=False),
               Column('label', String, nullable=False),
-              Column('description', String, nullable=True),
               Column('value_type', String, nullable=False),
-              Column('default_value', String),
-              Column('is_mandatory', Boolean, nullable=False, default=False),
+              Column('description', String, nullable=True),
               )
     UniqueConstraint(parameter_definition_tbl.c.command_definition_id,
                      parameter_definition_tbl.c.name)
+    parameter_option_tbl = \
+        Table('parameter_option', metadata,
+              Column('parameter_option_id', Integer, primary_key=True),
+              Column('parameter_definition_id', Integer,
+                     ForeignKey(
+                        parameter_definition_tbl.c.parameter_definition_id),
+                     nullable=False),
+              Column('name', String, nullable=False),
+              Column('value', String, nullable=False),
+              )
     command_tbl = \
         Table('command', metadata,
               Column('command_id', Integer, primary_key=True),
@@ -83,7 +91,7 @@ def create_metadata(engine):
                      nullable=False),
               Column('timestamp', DateTime, nullable=False),
               Column('submitter', String, nullable=False),
-              Column('environment', String),
+              Column('environment', String, nullable=True),
               )
     parameter_tbl = \
         Table('parameter', metadata,
@@ -114,7 +122,20 @@ def create_metadata(engine):
             dict(command_definition=
                     relationship(CommandDefinition,
                                  uselist=False,
-                                 back_populates='parameter_definitions')
+                                 back_populates='parameter_definitions'),
+                 parameter_options=
+                    relationship(ParameterOption,
+                                 cascade_backrefs=False,
+                                 back_populates='parameter_definition'),
+                 )
+           )
+    mapper(ParameterOption, parameter_option_tbl,
+           id_attribute='parameter_option_id',
+           properties=
+            dict(parameter_definition=
+                    relationship(ParameterDefinition,
+                                 uselist=False,
+                                 back_populates='parameter_options')
                  )
            )
     mapper(Command, command_tbl,

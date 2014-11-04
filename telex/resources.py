@@ -15,6 +15,7 @@ from everest.resources.descriptors import terminal_attribute
 from telex.interfaces import ICommandDefinition
 from telex.interfaces import IParameter
 from telex.interfaces import IParameterDefinition
+from telex.interfaces import IParameterOption
 
 
 __docformat__ = 'reStructuredText en'
@@ -44,8 +45,14 @@ class ParameterDefinitionMember(Member):
     command_definition = member_attribute(ICommandDefinition,
                                           'command_definition')
     value_type = terminal_attribute(str, 'value_type')
-    default_value = terminal_attribute(str, 'default_value')
-    is_mandatory = terminal_attribute(bool, 'is_mandatory')
+    parameter_options = collection_attribute(IParameterOption,
+                                             'parameter_options')
+
+
+class ParameterOptionMember(Member):
+    relation = 'http://telex.org/relations/parameter-option'
+    name = terminal_attribute(str, 'name')
+    value = terminal_attribute(str, 'value')
 
 
 class CommandMember(Member):

@@ -15,6 +15,13 @@
     >
     </resource>
     <resource
+        interface='telex.interfaces.IParameterOption'
+        member="telex.resources.ParameterOptionMember"
+        entity="telex.entities.ParameterOption"
+        expose="false"
+    >
+    </resource>
+    <resource
         interface='telex.interfaces.ICommand'
         member="telex.resources.CommandMember"
         collection_root_name="commands"
