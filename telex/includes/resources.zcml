@@ -27,6 +27,23 @@
         collection_root_name="commands"
         entity="telex.entities.Command"
     >
+    </resource>
+    <resource
+        interface='telex.interfaces.IShellCommand'
+        member="telex.resources.ShellCommandMember"
+        collection_root_name="shell-commands"
+        entity="telex.entities.ShellCommand"
+    >
+        <representer content_type='everest.mime.JsonMime'>
+            <ref attribute="parameters" kind="URL" />
+        </representer>    
+    </resource>
+    <resource
+        interface='telex.interfaces.IRestCommand'
+        member="telex.resources.RestCommandMember"
+        collection_root_name="rest-commands"
+        entity="telex.entities.RestCommand"
+    >
         <representer content_type='everest.mime.JsonMime'>
             <ref attribute="parameters" kind="URL" />
         </representer>    
@@ -36,6 +53,23 @@
         member="telex.resources.CommandDefinitionMember"
         collection_root_name="command-definitions"
         entity="telex.entities.CommandDefinition"
+    >
+    </resource>
+    <resource
+        interface='telex.interfaces.IShellCommandDefinition'
+        member="telex.resources.ShellCommandDefinitionMember"
+        collection_root_name="shell-command-definitions"
+        entity="telex.entities.ShellCommandDefinition"
+    >
+        <representer content_type='everest.mime.JsonMime'>
+            <ref attribute="parameter_definitions" kind="URL" />
+        </representer>    
+    </resource>
+    <resource
+        interface='telex.interfaces.IRestCommandDefinition'
+        member="telex.resources.RestCommandDefinitionMember"
+        collection_root_name="rest-command-definitions"
+        entity="telex.entities.RestCommandDefinition"
     >
         <representer content_type='everest.mime.JsonMime'>
             <ref attribute="parameter_definitions" kind="URL" />

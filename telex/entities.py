@@ -7,9 +7,15 @@ See LICENSE.txt for licensing, CONTRIBUTORS.txt for contributor information.
 Created on Jul 7, 2014.
 """
 import datetime
+import json
+import os
+from subprocess import PIPE
+from subprocess import Popen
 
 from pytz import timezone
+import requests
 
+from everest.constants import RequestMethods
 from everest.entities.base import Entity
 from everest.representers.converters import ConverterRegistry
 from telex.compat import quote
@@ -34,8 +40,6 @@ class CommandDefinition(Entity):
     name = None
     #: Human-readable, explanatory label.
     label = None
-    #: Command executable.
-    executable = None
     #: User submitting the command.
     submitter = None
     #: Category this command definition belongs to. Optional.
@@ -44,26 +48,22 @@ class CommandDefinition(Entity):
     description = None
     #: List of parameter definitions for this command definition.
     parameter_definitions = None
-    #: Environment variables to set for the command execution. Optional.
-    environment = None
-    #: Working directory to run the command in. Optional.
-    working_directory = None
+    #:
+    command_definition_type = None
 
-    def __init__(self, name, label, executable, submitter, category=None,
-                 description=None, parameter_definitions=None,
-                 environment=None, working_directory=None, **kw):
+    def __init__(self, name, label, submitter, category=None,
+                 description=None, parameter_definitions=None, **kw):
+        if type(self) is CommandDefinition:
+            raise NotImplementedError('Abstract class.')
         Entity.__init__(self, **kw)
         self.name = name
         self.label = label
-        self.executable = executable
         self.submitter = submitter
         self.category = category
         self.description = description
         if parameter_definitions is None:
             parameter_definitions = []
         self.parameter_definitions = parameter_definitions
-        self.environment = environment
-        self.working_directory = working_directory
 
     @property
     def slug(self):
@@ -82,9 +82,49 @@ class CommandDefinition(Entity):
         return pd
 
 
+class ShellCommandDefinition(CommandDefinition):
+    #: Executable to run.
+    executable = None
+    #: Environment variables to set for the command execution. Optional.
+    environment = None
+    #: Working directory to run the command in. Optional.
+    working_directory = None
+
+    def __init__(self, name, label, submitter, executable,
+                 environment=None, working_directory=None, **kw):
+        CommandDefinition.__init__(self, name, label, submitter, **kw)
+        self.command_definition_type = 'SHELL'
+        self.executable = executable
+        self.environment = environment
+        self.working_directory = working_directory
+
+
+class RestCommandDefinition(CommandDefinition):
+    #: URL to compose.
+    url = None
+    #: MIME content type of the request.
+    request_content_type = None
+    #: MIME content type of the response.
+    response_content_type = None
+    #: HTML operation.
+    operation = None
+
+    def __init__(self, name, label, submitter, url,
+                 request_content_type, response_content_type=None,
+                 operation=RequestMethods.POST, **kw):
+        CommandDefinition.__init__(self, name, label, submitter, **kw)
+        self.command_definition_type = 'REST'
+        self.url = url
+        self.request_content_type = request_content_type
+        if response_content_type is None:
+            response_content_type = request_content_type
+        self.response_content_type = response_content_type
+        self.operation = operation
+
+
 class ParameterDefinition(Entity):
     """
-    Parameter definition within in a command definition.
+    Parameter definition within a command definition.
     """
     #: Name of the parameter definition. Needs to be unique within the
     #: referenced command definition.
@@ -101,7 +141,7 @@ class ParameterDefinition(Entity):
     parameter_options = None
     #: Dictionary mapping parameter option names to their values.
     __po_map = None
-    #
+    #: Dictionary mapping parameter option types to their Python types.
     __type_map = {VALUE_TYPES.BOOLEAN : bool,
                   VALUE_TYPES.INT : int,
                   VALUE_TYPES.DOUBLE : float,
@@ -190,7 +230,6 @@ class ParameterDefinition(Entity):
                              % (parameter_option.name, self.value_type))
 
 
-
 class ParameterOption(Entity):
     """
     Option for a parameter definition.
@@ -224,23 +263,11 @@ class Command(Entity):
     timestamp = None
     #: User submitting this command.
     submitter = None
-    #: Environment variables to set for this command. Optional.
-    environment = None
-    #: Output generated during the execution.
-    output_string = None
-    #: Errors generated during the execution.
-    error_string = None
-    #: Exit code of the command.
-    exit_code = None
+    #:
+    command_type = None
 
     @classmethod
     def create_from_data(cls, data):
-        prms = data.get('parameters')
-        try:
-            prm_it = iter(prms)
-        except TypeError:
-            raise TypeError('The `parameters` argument needs to be an '
-                            'iterable.')
         cmd_def = data.get('command_definition')
         if not isinstance(cmd_def, CommandDefinition):
             raise ValueError('The `command_definition` argument needs to be '
@@ -250,15 +277,22 @@ class Command(Entity):
         do_check_missing_mandatory = True
         prm_def_map = dict([(prm_def.name, prm_def)
                             for prm_def in cmd_def.parameter_definitions])
-        for prm in prm_it:
+        prms = data.get('parameters')
+        if not prms is None:
             try:
-                prm_def = prm_def_map.pop(prm.parameter_definition.name)
-            except KeyError:
-                raise KeyError('Invalid parameter "%s".'
-                               % prm.parameter_definition.name)
-            if prm_def.name == 'help':
-                # This is an invocation with --help.
-                do_check_missing_mandatory = False
+                prm_it = iter(prms)
+            except TypeError:
+                raise TypeError('The `parameters` argument needs to be an '
+                                'iterable.')
+            for prm in prm_it:
+                try:
+                    prm_def = prm_def_map.pop(prm.parameter_definition.name)
+                except KeyError:
+                    raise KeyError('Invalid parameter "%s".'
+                                   % prm.parameter_definition.name)
+                if prm_def.name == 'help':
+                    # This is an invocation with --help.
+                    do_check_missing_mandatory = False
         if do_check_missing_mandatory:
             # Check for missing mandatory parameters.
             missing_cmnd_prms = [prm_def
@@ -272,7 +306,9 @@ class Command(Entity):
         return cls(**data)
 
     def __init__(self, command_definition, submitter, parameters,
-                 timestamp=None, environment=None, **kw):
+                 timestamp=None, **kw):
+        if type(self) is Command:
+            raise NotImplementedError('Abstract class.')
         Entity.__init__(self, **kw)
         self.command_definition = command_definition
         self.parameters = parameters
@@ -281,12 +317,106 @@ class Command(Entity):
             utc = timezone('UTC')
             timestamp = datetime.datetime.now(utc)
         self.timestamp = timestamp
+
+    def run(self):
+        raise NotImplementedError('Abstract method.')
+
+
+class ShellCommand(Command):
+    #: Environment variables to set for this command. Optional.
+    environment = None
+    #: Output generated during the execution.
+    output_string = None
+    #: Errors generated during the execution.
+    error_string = None
+    #: Exit code of the command.
+    exit_code = None
+
+    def __init__(self, command_definition, submitter, parameters,
+                 environment=None, **kw):
+        Command.__init__(self, command_definition, submitter, parameters,
+                         **kw)
+        self.command_type = 'SHELL'
+        if environment is None:
+            environment = {}
         self.environment = environment
 
+    def run(self):
+        cwd = self.command_definition.working_directory
+        if cwd is None:
+            # We use the path of the executable as default execution path.
+            exc = self.command_definition.executable
+            cwd = os.path.dirname(exc)
+            if cwd != '':
+                cwd = os.path.expandvars(cwd)
+            else:
+                cwd = None
+        cmd_str = '%s %s' % (self.command_definition.executable,
+                             self.__format_parameters(self.parameters))
+        child = Popen(cmd_str,
+                      shell=True,
+                      cwd=cwd,
+                      env=self.environment,
+                      universal_newlines=True, stdout=PIPE, stderr=PIPE)
+        output_string, error_string = child.communicate()
+        self.output_string = output_string
+        self.error_string = error_string
+        self.exit_code = child.returncode
+
+    def __format_parameters(self, parameters):
+        prm_strings = []
+        for prm in parameters:
+            if not prm.parameter_definition.get_option('is_mandatory'):
+                # Optional argument (short or long).
+                if len(prm.parameter_definition.name) == 1:
+                    prefix = '-%s' % prm.parameter_definition.name
+                else:
+                    prefix = '--%s=' % prm.parameter_definition.name
+            else:
+                # Positional argument.
+                prefix = ''
+            prm_strings.append(prefix + quote(str(prm.value)))
+        return ' '.join(prm_strings)
+
+
+class RestCommand(Command):
+    #: MIME content type for the encapsulated REST request.
+    content_type = None
+
+    def __init__(self, command_definition, submitter, parameters,
+                 content_type, **kw):
+        Command.__init__(self, command_definition, submitter, parameters,
+                         **kw)
+        self.command_type = 'REST'
+        self.content_type = content_type
+        self.__response = None
+
+    def run(self):
+        prms = dict([(prm.parameter_definition.name, prm.value)
+                     for prm in self.parameters])
+        headers = {'content-type': self.content_type}
+        self.__response = requests.request(self.command_definition.operation,
+                                           self.command_definition.url,
+                                           headers=headers,
+                                           params=json.dumps(prms))
+
     @property
-    def command_string(self):
-        return ' '.join([self.command_definition.executable] +
-                        [str(prm) for prm in self.parameters])
+    def response_status_code(self):
+        "Status code from the REST call response (integer)."
+        rsp = self.__response
+        return None if rsp is None else rsp.status_code
+
+    @property
+    def response_headers(self):
+        "Headers from the REST call response (case-insensitive dictionary)."
+        rsp = self.__response
+        return None if rsp is None else rsp.headers
+
+    @property
+    def response_body(self):
+        "Body from the REST call response (unicode)."
+        rsp = self.__response
+        return None if rsp is None else rsp.text
 
 
 class Parameter(Entity):
@@ -302,15 +432,3 @@ class Parameter(Entity):
         Entity.__init__(self, **kw)
         self.parameter_definition = parameter_definition
         self.value = value
-
-    def __str__(self):
-        if not self.parameter_definition.get_option('is_mandatory'):
-            # Optional argument (short or long).
-            if len(self.parameter_definition.name) == 1:
-                prefix = '-%s' % self.parameter_definition.name
-            else:
-                prefix = '--%s=' % self.parameter_definition.name
-        else:
-            # Positional argument.
-            prefix = ''
-        return prefix + quote(str(self.value))

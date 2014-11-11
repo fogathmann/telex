@@ -8,30 +8,30 @@ Created on Jul 7, 2014.
 """
 import os
 import re
-from subprocess import PIPE
-from subprocess import Popen
 
 from pyramid.httpexceptions import HTTPBadRequest
+from pyramid.httpexceptions import HTTPCreated
 from pyramid.threadlocal import get_current_registry
 
 from everest.interfaces import IUserMessageNotifier
 from everest.views.postcollection import PostCollectionView
+from pyramid.httpexceptions import status_map
 
 
 __docformat__ = 'reStructuredText en'
-__all__ = ['PostCommandCollectionView',
+__all__ = ['PostRestCommandCollectionView',
+           'PostShellCommandCollectionView',
            ]
 
 
-class PostCommandCollectionView(PostCollectionView):
+class PostShellCommandCollectionView(PostCollectionView):
     error_line_pat = re.compile('.* error .*', re.I)
     warning_line_pat = re.compile('.* warn .*', re.I)
 
     def _get_result(self, resource):
         cmd_ent = resource.get_entity()
         # This is where the command is run.
-        exc = CommandExecutor(cmd_ent)
-        exc.run()
+        cmd_ent.run()
         result = None
         if cmd_ent.exit_code != 0:
             # We attempt to extract error and warning messages from the
@@ -78,32 +78,18 @@ class PostCommandCollectionView(PostCollectionView):
         return result
 
 
-class CommandExecutor(object):
-    """
-    Wraps the execution of a command.
-    """
-    def __init__(self, command):
-        self.__command = command
+class PostRestCommandCollectionView(PostCollectionView):
 
-    def run(self):
-        """
-        Runs the command with the parameters passed during initialization.
-        """
-        cwd = self.__command.command_definition.working_directory
-        if cwd is None:
-            # We use the path of the executable as default execution path.
-            exc = self.__command.command_definition.executable
-            cwd = os.path.dirname(exc)
-            if cwd != '':
-                cwd = os.path.expandvars(cwd)
-            else:
-                cwd = None
-        child = Popen(self.__command.command_string,
-                      shell=True,
-                      cwd=cwd,
-                      env=self.__command.environment,
-                      universal_newlines=True, stdout=PIPE, stderr=PIPE)
-        output_string, error_string = child.communicate()
-        self.__command.output_string = output_string
-        self.__command.error_string = error_string
-        self.__command.exit_code = child.returncode
+    def _get_result(self, resource):
+        cmd_ent = resource.get_entity()
+        # This is where the command is run.
+        cmd_ent.run()
+        if cmd_ent.response_status_code != HTTPCreated.code:
+            http_exc_cls = status_map[cmd_ent.response_status_code]
+            message = "Expected HTTP 201 Created, got HTTP %s %s." \
+                      % (http_exc_cls.code, http_exc_cls.title)
+            http_exc = HTTPBadRequest(message)
+            result = self.request.get_response(http_exc)
+        else:
+            result = PostCollectionView._get_result(self, resource)
+        return result

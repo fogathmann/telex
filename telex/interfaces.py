@@ -22,6 +22,14 @@ class ICommandDefinition(Interface):
     pass
 
 
+class IShellCommandDefinition(ICommandDefinition):
+    pass
+
+
+class IRestCommandDefinition(ICommandDefinition):
+    pass
+
+
 class IParameterDefinition(Interface):
     pass
 
@@ -31,6 +39,14 @@ class IParameterOption(Interface):
 
 
 class ICommand(Interface):
+    pass
+
+
+class IShellCommand(ICommand):
+    pass
+
+
+class IRestCommand(ICommand):
     pass
 
 

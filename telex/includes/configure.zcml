@@ -16,25 +16,35 @@
 
     <resource_view
         for="telex.interfaces.IParameterDefinition
-             telex.interfaces.ICommandDefinition
-             telex.interfaces.ICommand
+             telex.interfaces.IShellCommandDefinition
+             telex.interfaces.IRestCommandDefinition
+             telex.interfaces.IShellCommand
+             telex.interfaces.IRestCommand
             "
         request_method="GET" />
 
     <collection_view
-        for="telex.interfaces.ICommandDefinition
+        for="telex.interfaces.IShellCommandDefinition
+             telex.interfaces.IRestCommandDefinition
              telex.interfaces.IParameterDefinition
             "
         request_method="POST" />
 
     <collection_view
-        for="telex.interfaces.ICommand
+        for="telex.interfaces.IShellCommand
             "
-        view="telex.views.PostCommandCollectionView"
+        view="telex.views.PostShellCommandCollectionView"
+        request_method="POST" />
+
+    <collection_view
+        for="telex.interfaces.IRestCommand
+            "
+        view="telex.views.PostRestCommandCollectionView"
         request_method="POST" />
 
     <member_view
-        for="telex.interfaces.ICommandDefinition
+        for="telex.interfaces.IShellCommandDefinition
+             telex.interfaces.IRestCommandDefinition
             "
         request_method="PUT
                         FAKE_PUT
