@@ -48,6 +48,8 @@ class RestCommandDefinitionMember(CommandDefinitionMember):
     title = 'REST Command Definition'
     request_content_type = terminal_attribute(str, 'request_content_type')
     response_content_type = terminal_attribute(str, 'response_content_type')
+    url = terminal_attribute(str, 'url')
+    operation = terminal_attribute(str, 'operation')
 
 
 class ParameterDefinitionMember(Member):
@@ -92,7 +94,6 @@ class RestCommandMember(CommandMember):
     title = 'REST Command'
     command_definition = member_attribute(IRestCommandDefinition,
                                           'command_definition')
-    content_type = terminal_attribute(str, 'content_type')
     response_status_code = terminal_attribute(int, 'response_status_code')
     response_headers = terminal_attribute(dict, 'response_headers')
     response_body = terminal_attribute(str, 'response_body')

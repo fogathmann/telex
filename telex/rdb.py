@@ -26,6 +26,7 @@ from telex.entities import RestCommand
 from telex.entities import RestCommandDefinition
 from telex.entities import ShellCommand
 from telex.entities import ShellCommandDefinition
+from sqlalchemy.schema import CheckConstraint
 
 
 #from sqlalchemy.sql import literal
@@ -79,7 +80,11 @@ def create_metadata(engine):
                         command_definition_tbl.c.command_definition_id),
                      primary_key=True,
                      nullable=False),
-              Column('url_template', String, nullable=False),
+              Column('url', String, nullable=False),
+              Column('operation', String,
+                     CheckConstraint(
+                                "operation IN ('GET','POST','PUT','PATCH')"),
+                     nullable=False, default='POST'),
               Column('request_content_type', String, nullable=False),
               Column('response_content_type', String, nullable=False),
               )

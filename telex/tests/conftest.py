@@ -108,10 +108,10 @@ class MockRequests(object):
     def __init__(self, app):
         self.__app = app
 
-    def __call__(self, operation, url, params=None, headers=None):
+    def __call__(self, operation, url, data=None, headers=None):
         cnt_tpe = headers.pop('content-type', None)
         op_method = getattr(self.__app, operation.lower())
-        return op_method(url, params=params, content_type=cnt_tpe,
+        return op_method(url, params=data, content_type=cnt_tpe,
                          status=HTTPCreated.code)
 
 
@@ -162,7 +162,6 @@ def rest_cmd(submitter): # pylint:disable=W0621
                   Parameter(pd4, 'echo')]
     cmd = RestCommand(cmd_def,
                       submitter,
-                      parameters,
-                      content_type=JsonMime.mime_type_string)
+                      parameters)
     cmd_coll = get_root_collection(IRestCommand)
     return cmd_coll.create_member(cmd)

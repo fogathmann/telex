@@ -380,25 +380,21 @@ class ShellCommand(Command):
 
 
 class RestCommand(Command):
-    #: MIME content type for the encapsulated REST request.
-    content_type = None
-
-    def __init__(self, command_definition, submitter, parameters,
-                 content_type, **kw):
+    def __init__(self, command_definition, submitter, parameters, **kw):
         Command.__init__(self, command_definition, submitter, parameters,
                          **kw)
         self.command_type = 'REST'
-        self.content_type = content_type
         self.__response = None
 
     def run(self):
         prms = dict([(prm.parameter_definition.name, prm.value)
                      for prm in self.parameters])
-        headers = {'content-type': self.content_type}
+        headers = \
+            {'content-type': self.command_definition.request_content_type}
         self.__response = requests.request(self.command_definition.operation,
                                            self.command_definition.url,
                                            headers=headers,
-                                           params=json.dumps(prms))
+                                           data=json.dumps(prms))
 
     @property
     def response_status_code(self):
