@@ -12,6 +12,7 @@ import os
 from subprocess import PIPE
 from subprocess import Popen
 
+from pyramid.threadlocal import get_current_request
 from pytz import timezone
 import requests
 
@@ -390,11 +391,19 @@ class RestCommand(Command):
         prms = dict([(prm.parameter_definition.name, prm.value)
                      for prm in self.parameters])
         headers = \
-            {'content-type': self.command_definition.request_content_type}
+            {'content-type': self.command_definition.request_content_type,
+             }
+        cr = get_current_request()
+        if not cr.authorization is None:
+            headers['authorization'] = ' '.join(cr.authorization)
         self.__response = requests.request(self.command_definition.operation,
                                            self.command_definition.url,
                                            headers=headers,
                                            data=json.dumps(prms))
+
+    @property
+    def response(self):
+        return self.__response
 
     @property
     def response_status_code(self):
