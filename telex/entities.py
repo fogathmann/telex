@@ -381,11 +381,12 @@ class ShellCommand(Command):
 
 
 class RestCommand(Command):
+    __response = None
+
     def __init__(self, command_definition, submitter, parameters, **kw):
         Command.__init__(self, command_definition, submitter, parameters,
                          **kw)
         self.command_type = 'REST'
-        self.__response = None
 
     def run(self):
         prms = dict([(prm.parameter_definition.name, prm.value)
