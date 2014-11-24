@@ -9,13 +9,13 @@ from pyramid.httpexceptions import HTTPRedirection
 import pytest
 
 from everest.mime import JsonMime
+from everest.representers.utils import as_representer
 from everest.resources.utils import get_root_collection
 from telex.interfaces import IShellCommand
+from telex.interfaces import IShellCommandDefinition
 from telex.tests.messages import ERROR_MSG
 from telex.tests.messages import INFO_MSG
 from telex.tests.messages import WARNING_MSG
-from everest.representers.utils import as_representer
-from telex.interfaces import IShellCommandDefinition
 
 
 TEXT = 'Hello Mars!'
@@ -142,6 +142,7 @@ class TestTelexRestCommand(_TestTelexCommandBase):
     commands_path = '/rest-commands'
     command_definition_data_path = \
                     resource_filename('telex.tests', 'echo_cmd_def.json.tmpl')
+    setup_request = True
 
     def test_post(self, app_mocked_request, rest_cmd):
         cnt_tpe = JsonMime

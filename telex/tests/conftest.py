@@ -116,14 +116,13 @@ class MockRequests(object):
 
 
 @pytest.fixture
-def app_mocked_request(app_creator_with_request, monkeypatch):
+def app_mocked_request(app_creator, monkeypatch):
     """
     This redirects the REST operations that are normally carried out through
     the requests.request function to appropriate calls to our test app.
     """
-    monkeypatch.setattr(requests, 'request',
-                        MockRequests(app_creator_with_request))
-    return app_creator_with_request
+    monkeypatch.setattr(requests, 'request', MockRequests(app_creator))
+    return app_creator
 
 
 @pytest.fixture
